@@ -1,0 +1,42 @@
+name: farmfresh
+description: "A modern Flutter farm produce ordering app."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  lottie: ^3.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/splash_animation.json
+    - assets/images/oranges.jpg
+    - assets/images/carrots.jpg
+    - assets/images/mint.jpg
+    - assets/images/coriander.jpg
+    - assets/images/cabbage.jpg
+    - assets/images/apples.jpg
+    - assets/images/farmers/
+    - assets/images/placeholder.jpg
+
+
+  # Uncomment and configure if you want custom fonts later
+  # fonts:
+  #   - family: Montserrat
+  #     fonts:
+  #       - asset: assets/fonts/Montserrat-Regular.ttf
+  #       - asset: assets/fonts/Montserrat-Bold.ttf
+  #         weight: 700
