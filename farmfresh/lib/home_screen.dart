@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'product_provider.dart';
 import 'produce_detail_screen.dart';
 import 'category_screen.dart';
 import 'settings_screen.dart';
-import 'farmers_corner_screen.dart';
-import 'farmer_profile_screen.dart';
 import 'message_screen.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'produce_card.dart';
+import 'add_product_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -91,73 +92,56 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Messages'),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AddProductScreen()),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
     );
   }
 
   Widget _buildHomeContent(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    final products = Provider.of<ProductProvider>(context).products;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Promoted Goods', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
-        _buildProduceCard(context, 'Fresh Apples', 'assets/images/apples.jpg', 120),
-        _buildProduceCard(context, 'Cabbage Deal', 'assets/images/cabbage.jpg', 60),
-        _buildProduceCard(context, 'Mint Leaves', 'assets/images/mint.jpg', 50),
-        _buildProduceCard(context, 'Carrots Pack', 'assets/images/carrots.jpg', 80),
-      ],
-    );
-  }
-
-  Widget _buildProduceCard(BuildContext context, String title, String imagePath, int price) {
-    double avgRating = _averageRating(title);
-
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ProduceDetailScreen(
-              produce: {
-                'name': title,
-                'image': imagePath,
-                'price': price,
-                'description': 'Fresh farm-picked $title available now!',
-              },
-            ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: products.length,
+            itemBuilder: (context, index) {
+              final product = products[index];
+              double avgRating = _averageRating(product['title']);
+              return ProduceCard(
+                title: product['title'],
+                imagePath: product['image'],
+                price: product['price'],
+                avgRating: avgRating,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ProduceDetailScreen(
+                        produce: {
+                          'name': product['title'],
+                          'image': product['image'],
+                          'price': product['price'],
+                          'description': 'Fresh farm-picked ${product['title']} available now!',
+                        },
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
           ),
-        );
-      },
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        elevation: 3,
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.asset(imagePath, width: 80, height: 80, fit: BoxFit.cover),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 4),
-                  RatingBarIndicator(
-                    rating: avgRating,
-                    itemBuilder: (context, _) => const Icon(Icons.star, color: Colors.amber),
-                    itemCount: 5,
-                    itemSize: 18,
-                    unratedColor: Colors.grey[300],
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.arrow_forward_ios, size: 16),
-          ],
         ),
-      ),
+      ],
     );
   }
 }

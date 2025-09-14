@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
@@ -77,6 +79,7 @@ class _ProduceDetailScreenState extends State<ProduceDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final produce = widget.produce;
+    final productId = produce['id']; // Assuming the document ID is used as product ID
 
     return Scaffold(
       appBar: AppBar(
@@ -128,6 +131,30 @@ class _ProduceDetailScreenState extends State<ProduceDetailScreen> {
                   ),
                   const SizedBox(height: 20),
 
+                  // Order Now button
+                  ElevatedButton(
+                    onPressed: () async {
+                      final user = FirebaseAuth.instance.currentUser;
+                      if (user == null) return;
+                      await FirebaseFirestore.instance.collection('orders').add({
+                        'userId': user.uid,
+                        'productId': productId,
+                        'timestamp': FieldValue.serverTimestamp(),
+                      });
+                      // ignore: use_build_context_synchronously
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Order placed!')),
+                      );
+                    },
+                    // ignore: sort_child_properties_last
+                    child: const Text('Order Now'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF8BC34A),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
                   // Reviews List
                   if (reviews.isNotEmpty)
                     const Text('Customer Reviews', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -144,8 +171,115 @@ class _ProduceDetailScreenState extends State<ProduceDetailScreen> {
                 ],
               ),
             ),
+
+            // StreamBuilder for real-time reviews
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('products')
+                  .doc(productId)
+                  .collection('reviews')
+                  .orderBy('timestamp', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const CircularProgressIndicator();
+                final reviews = snapshot.data!.docs;
+                return Column(
+                  children: reviews.map((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    return ListTile(
+                      title: Text(data['comment'] ?? ''),
+                      subtitle: Text('Rating: ${data['rating'] ?? ''}'),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class ReviewForm extends StatefulWidget {
+  final String productId;
+  const ReviewForm({super.key, required this.productId});
+
+  @override
+  State<ReviewForm> createState() => _ReviewFormState();
+}
+
+class _ReviewFormState extends State<ReviewForm> {
+  final _controller = TextEditingController();
+  double _rating = 5;
+
+  Future<void> _submit() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    await FirebaseFirestore.instance
+        .collection('products')
+        .doc(widget.productId)
+        .collection('reviews')
+        .add({
+      'userId': user.uid,
+      'comment': _controller.text,
+      'rating': _rating,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+    _controller.clear();
+    setState(() => _rating = 5);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Slider(
+          value: _rating,
+          min: 1,
+          max: 5,
+          divisions: 4,
+          label: _rating.toString(),
+          onChanged: (v) => setState(() => _rating = v),
+        ),
+        TextField(
+          controller: _controller,
+          decoration: const InputDecoration(labelText: 'Write a review'),
+        ),
+        ElevatedButton(onPressed: _submit, child: const Text('Submit Review')),
+      ],
+    );
+  }
+}
+
+class OrdersScreen extends StatelessWidget {
+  const OrdersScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return const Center(child: Text('Not signed in'));
+    return Scaffold(
+      appBar: AppBar(title: const Text('My Orders')),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('orders')
+            .where('userId', isEqualTo: user.uid)
+            .orderBy('timestamp', descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return const CircularProgressIndicator();
+          final orders = snapshot.data!.docs;
+          return ListView(
+            children: orders.map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              return ListTile(
+                title: Text('Product: ${data['productId']}'),
+                subtitle: Text('Ordered at: ${data['timestamp']?.toDate()}'),
+              );
+            }).toList(),
+          );
+        },
       ),
     );
   }
