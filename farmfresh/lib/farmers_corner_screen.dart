@@ -1,74 +1,56 @@
 import 'package:flutter/material.dart';
-import 'farmer_profile_screen.dart';
 
 class FarmersCornerScreen extends StatelessWidget {
   const FarmersCornerScreen({super.key});
 
-  static const List<Map<String, String>> farmersList = [
-    {
-      'name': 'Mama Njeri',
-      'location': 'Limuru, Kiambu',
-      'bio': 'Growing organic vegetables for over 15 years.',
-      'image': 'https://via.placeholder.com/150/8BC34A/FFFFFF?text=Farmer+1'
-    },
-    {
-      'name': 'Kamau Fresh Farm',
-      'location': 'Nakuru County',
-      'bio': 'Supplying fresh fruits and herbs since 2012.',
-      'image': 'https://via.placeholder.com/150/8BC34A/FFFFFF?text=Farmer+2'
-    },
-    {
-      'name': 'Wanjiru Gardens',
-      'location': 'Embu Town',
-      'bio': 'Specialized in organic spices and traditional greens.',
-      'image': 'https://via.placeholder.com/150/8BC34A/FFFFFF?text=Farmer+3'
-    },
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final farmers = [
+      {
+        'name': 'Mama Njeri',
+        'location': 'Limuru, Kiambu',
+        'image': 'assets/images/farmers/farmer1.jpg',
+        'bio':
+            'Specializes in organic spinach, kale and fresh indigenous vegetables. Farming sustainably for over 12 years.'
+      },
+      {
+        'name': 'Kamau Fresh',
+        'location': 'Nakuru',
+        'image': 'assets/images/farmers/farmer2.jpg',
+        'bio':
+            'Famous for his juicy tomatoes and onions, with a loyal customer base across Rift Valley.'
+      },
+      {
+        'name': 'Wambui Organics',
+        'location': 'Nyeri',
+        'image': 'assets/images/farmers/farmer3.jpg',
+        'bio':
+            'Delivers premium avocados and coriander, grown pesticide-free in the highlands.'
+      },
+    ];
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Farmers' Corner"),
+        title: const Text('Farmers\' Corner'),
         backgroundColor: const Color(0xFF8BC34A),
-        centerTitle: true,
       ),
       body: ListView.builder(
-        padding: const EdgeInsets.all(12),
-        itemCount: farmersList.length,
+        padding: const EdgeInsets.all(16),
+        itemCount: farmers.length,
         itemBuilder: (context, index) {
-          final farmer = farmersList[index];
+          final farmer = farmers[index];
           return Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            elevation: 3,
+            margin: const EdgeInsets.symmetric(vertical: 10),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: ListTile(
-              contentPadding: const EdgeInsets.all(10),
               leading: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  farmer['image']!,
-                  width: 60,
-                  height: 60,
-                  fit: BoxFit.cover,
-                ),
+                borderRadius: BorderRadius.circular(16),
+                child: Image.asset(farmer['image']!, width: 60, height: 60, fit: BoxFit.cover),
               ),
-              title: Text(
-                farmer['name']!,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
+              title: Text(farmer['name']!, style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text('${farmer['location']}\n${farmer['bio']}'),
               isThreeLine: true,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => FarmerProfileScreen(farmer: farmer),
-                  ),
-                );
-              },
             ),
           );
         },

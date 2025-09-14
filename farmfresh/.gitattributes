@@ -1,0 +1,9 @@
+# Auto normalize line endings
+* text=auto
+
+# Explicit settings for some files
+*.dart text
+*.yaml text
+*.json text
+*.md text
+*.sh text eol=lf

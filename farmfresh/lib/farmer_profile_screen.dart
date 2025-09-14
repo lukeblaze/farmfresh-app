@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class FarmerProfileScreen extends StatelessWidget {
-  final Map<String, String> farmer;
+  final Map<String, dynamic> farmer;
 
   const FarmerProfileScreen({super.key, required this.farmer});
 
@@ -9,7 +9,7 @@ class FarmerProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(farmer['name']!),
+        title: Text(farmer['name']),
         backgroundColor: const Color(0xFF8BC34A),
       ),
       body: Column(
@@ -20,7 +20,7 @@ class FarmerProfileScreen extends StatelessWidget {
             height: 250,
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: NetworkImage(farmer['image']!),
+                image: AssetImage(farmer['image']),
                 fit: BoxFit.cover,
               ),
             ),
@@ -32,13 +32,13 @@ class FarmerProfileScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  farmer['name']!,
+                  farmer['name'],
                   style: const TextStyle(
                       fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  farmer['location']!,
+                  farmer['location'],
                   style: const TextStyle(fontSize: 18, color: Colors.grey),
                 ),
                 const SizedBox(height: 12),
@@ -48,7 +48,7 @@ class FarmerProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  farmer['bio']!,
+                  farmer['bio'],
                   style: const TextStyle(fontSize: 16),
                 ),
               ],

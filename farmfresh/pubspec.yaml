@@ -12,11 +12,17 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   lottie: ^3.3.1
+  shared_preferences: ^2.2.2   # <-- added this line
+  image_picker: ^1.1.1
+  image_gallery_saver: ^2.0.3
+  flutter_rating_bar: ^4.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+
 
 flutter:
   uses-material-design: true
@@ -31,7 +37,7 @@ flutter:
     - assets/images/apples.jpg
     - assets/images/farmers/
     - assets/images/placeholder.jpg
-
+    
 
   # Uncomment and configure if you want custom fonts later
   # fonts:
@@ -40,3 +46,8 @@ flutter:
   #       - asset: assets/fonts/Montserrat-Regular.ttf
   #       - asset: assets/fonts/Montserrat-Bold.ttf
   #         weight: 700
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "icon.png"
