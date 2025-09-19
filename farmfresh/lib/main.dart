@@ -25,6 +25,29 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'FarmFresh',
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        primaryColor: const Color(0xFF145A32), // Dark green
+        scaffoldBackgroundColor: Colors.black,
+        cardColor: Colors.white,
+        colorScheme: ColorScheme.dark(
+          primary: const Color(0xFF145A32),
+          secondary: Colors.white,
+          surface: Colors.black, // <-- use surface instead of background
+        ),
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(color: Colors.white),
+          headlineSmall: TextStyle(color: Color(0xFF145A32)),
+        ),
+        buttonTheme: const ButtonThemeData(
+          buttonColor: Color(0xFF145A32),
+          textTheme: ButtonTextTheme.primary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+          ),
+        ),
+      ),
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
