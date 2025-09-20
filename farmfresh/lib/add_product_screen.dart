@@ -37,11 +37,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
         int.parse(_priceController.text.trim()),
         _imageFile!,
       );
-      // ignore: use_build_context_synchronously
-      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Product added!')));
       Navigator.pop(context);
     } catch (e) {
       setState(() => _error = e.toString());
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $_error')));
     } finally {
       setState(() => _loading = false);
     }
@@ -51,38 +55,39 @@ class _AddProductScreenState extends State<AddProductScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Add Product')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _titleController,
+                    decoration: const InputDecoration(labelText: 'Title'),
+                  ),
+                  TextField(
+                    controller: _priceController,
+                    decoration: const InputDecoration(labelText: 'Price'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 10),
+                  _imageFile != null
+                      ? Image.file(_imageFile!, height: 100)
+                      : const Text('No image selected'),
+                  TextButton(
+                    onPressed: _pickImage,
+                    child: const Text('Pick Image'),
+                  ),
+                  const SizedBox(height: 10),
+                  if (_error.isNotEmpty)
+                    Text(_error, style: const TextStyle(color: Colors.red)),
+                  ElevatedButton(
+                    onPressed: _loading ? null : _submit,
+                    child: const Text('Add Product'),
+                  ),
+                ],
+              ),
             ),
-            TextField(
-              controller: _priceController,
-              decoration: const InputDecoration(labelText: 'Price'),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 10),
-            _imageFile != null
-                ? Image.file(_imageFile!, height: 100)
-                : const Text('No image selected'),
-            TextButton(
-              onPressed: _pickImage,
-              child: const Text('Pick Image'),
-            ),
-            const SizedBox(height: 10),
-            if (_loading) const CircularProgressIndicator(),
-            if (_error.isNotEmpty)
-              Text(_error, style: const TextStyle(color: Colors.red)),
-            ElevatedButton(
-              onPressed: _loading ? null : _submit,
-              child: const Text('Add Product'),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

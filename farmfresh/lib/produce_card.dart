@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ProduceCard extends StatelessWidget {
   final String title;
@@ -30,12 +31,14 @@ class ProduceCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  imagePath,
+                child: CachedNetworkImage(
+                  imageUrl: imagePath,
                   width: 80,
                   height: 80,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
+                  placeholder: (context, url) =>
+                      const CircularProgressIndicator(),
+                  errorWidget: (context, url, error) => Container(
                     width: 80,
                     height: 80,
                     color: Colors.grey[300],

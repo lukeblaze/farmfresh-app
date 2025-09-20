@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MessageScreen extends StatefulWidget {
   const MessageScreen({super.key});
@@ -10,112 +10,142 @@ class MessageScreen extends StatefulWidget {
 }
 
 class _MessageScreenState extends State<MessageScreen> {
-  final List<Map<String, dynamic>> messages = [
-    {'text': 'Hi! Is your mint fresh today?', 'isMe': true},
-    {'text': 'Yes! Just harvested this morning.', 'isMe': false},
-  ];
+  final _controller = TextEditingController();
+  bool _loading = false;
+  String _error = '';
 
-  final TextEditingController messageController = TextEditingController();
-
-  void sendMessage() {
-    if (messageController.text.trim().isEmpty) return;
+  Future<void> _sendMessage() async {
     setState(() {
-      messages.add({'text': messageController.text.trim(), 'isMe': true});
-      messageController.clear();
+      _loading = true;
+      _error = '';
     });
-  }
-
-  void sendImage(File imageFile) {
-    setState(() {
-      messages.add({'image': imageFile, 'isMe': true});
-    });
-  }
-
-  Future<void> pickImage(ImageSource source) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
-    if (pickedFile != null) {
-      sendImage(File(pickedFile.path));
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw 'You must be signed in to send messages.';
+      await FirebaseFirestore.instance.collection('messages').add({
+        'userId': user.uid,
+        'text': _controller.text,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+      _controller.clear();
+    } catch (e) {
+      setState(() => _error = e.toString());
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $_error')));
+    } finally {
+      setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    var streamBuilder = StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('messages')
+          .orderBy('timestamp', descending: false)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final messages = snapshot.data!.docs;
+        final currentUser = FirebaseAuth.instance.currentUser;
+        return ListView.builder(
+          itemCount: messages.length,
+          itemBuilder: (context, index) {
+            final data = messages[index].data() as Map<String, dynamic>;
+            final isMe = data['userId'] == currentUser?.uid;
+            return Align(
+              alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: isMe ? const Color(0xFF145A32) : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: isMe
+                      ? CrossAxisAlignment.end
+                      : CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      data['text'] ?? '',
+                      style: TextStyle(
+                        color: isMe ? Colors.white : Colors.black,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isMe ? 'You' : data['userId'] ?? '',
+                      style: TextStyle(
+                        color: isMe ? Colors.white70 : Colors.black54,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
     return Scaffold(
       appBar: AppBar(
         title: const Text('Messages'),
-        backgroundColor: const Color(0xFF8BC34A),
+        backgroundColor: const Color(
+          0xFF145A32,
+        ), // Use your dark green theme color
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       body: Column(
         children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: messages.length,
-              itemBuilder: (context, index) {
-                final message = messages[index];
-                if (message.containsKey('image')) {
-                  return Align(
-                    alignment: message['isMe'] ? Alignment.centerRight : Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.file(message['image'], width: 180),
+          Expanded(child: streamBuilder),
+          if (_error.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(_error, style: const TextStyle(color: Colors.red)),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Material(
+              elevation: 2,
+              borderRadius: BorderRadius.circular(24),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      decoration: const InputDecoration(
+                        labelText: 'Type a message',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
                       ),
                     ),
-                  );
-                }
-                return Align(
-                  alignment: message['isMe'] ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                    constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
-                    decoration: BoxDecoration(
-                      color: message['isMe'] ? const Color(0xFFD1F2EB) : const Color(0xFFE8F5E9),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(message['text'], style: const TextStyle(fontSize: 16)),
                   ),
-                );
-              },
+                  _loading
+                      ? const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: CircularProgressIndicator(),
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.send),
+                          onPressed: _loading ? null : _sendMessage,
+                        ),
+                ],
+              ),
             ),
           ),
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.photo_camera, color: Color(0xFF8BC34A)),
-                  onPressed: () => pickImage(ImageSource.camera),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.photo, color: Color(0xFF8BC34A)),
-                  onPressed: () => pickImage(ImageSource.gallery),
-                ),
-                Expanded(
-                  child: TextField(
-                    controller: messageController,
-                    decoration: InputDecoration(
-                      hintText: 'Type message...',
-                      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: const BorderSide(color: Colors.grey, width: 0.8),
-                      ),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send, color: Color(0xFF8BC34A)),
-                  onPressed: sendMessage,
-                )
-              ],
-            ),
-          )
         ],
       ),
     );
